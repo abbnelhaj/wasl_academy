@@ -1,0 +1,19 @@
+{
+  "name": "studio-wasl-academy",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "sanity dev",
+    "start": "sanity start",
+    "build": "sanity build",
+    "deploy": "sanity deploy"
+  },
+  "dependencies": {
+    "@sanity/vision": "latest",
+    "sanity": "latest",
+    "styled-components": "^6.4.3"
+  },
+  "devDependencies": {
+    "typescript": "latest"
+  }
+}
