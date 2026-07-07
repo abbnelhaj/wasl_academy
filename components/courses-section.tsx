@@ -7,12 +7,16 @@ import {
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { FEATURED_COURSES_QUERY_RESULT } from "@/sanity.types";
 
 type CoursesSectionProps = {
+  courses?: FeaturedCourse[] | null;
   isSignedIn?: boolean;
 };
 
-const courses = [
+export type FeaturedCourse = FEATURED_COURSES_QUERY_RESULT[number];
+
+const fallbackCourses = [
   {
     title: "أساسيات إطلاق المتجر",
     label: "مجاني",
@@ -39,9 +43,42 @@ const courses = [
   },
 ];
 
-export function CoursesSection({ isSignedIn = false }: CoursesSectionProps) {
+function getCourseLabel(course: FeaturedCourse) {
+  if (course.accessType !== "paid") {
+    return "مجاني";
+  }
+
+  if (course.price && course.currency) {
+    return `${course.price} ${course.currency}`;
+  }
+
+  return "مدفوع";
+}
+
+function getLessonLabel(course: FeaturedCourse) {
+  const lessonCount = course.lessonCount ?? 0;
+  const moduleCount = course.moduleCount ?? 0;
+
+  if (lessonCount > 0) {
+    return `${lessonCount} ${lessonCount === 1 ? "درس" : "دروس"}`;
+  }
+
+  return `${moduleCount} ${moduleCount === 1 ? "وحدة" : "وحدات"}`;
+}
+
+function isFeaturedCourse(course: (typeof fallbackCourses)[number] | FeaturedCourse) {
+  return "_id" in course;
+}
+
+export function CoursesSection({
+  courses,
+  isSignedIn = false,
+}: CoursesSectionProps) {
   const href = "/dashboard/courses";
   const ctaLabel = isSignedIn ? "اذهب إلى كورساتي" : "تسجيل ثم عرض الكورسات";
+  const visibleCourses =
+    courses && courses.length > 0 ? courses.slice(0, 3) : fallbackCourses;
+  const icons = [StoreIcon, MegaphoneIcon, PackageCheckIcon];
 
   return (
     <section id="courses" className="border-y bg-card py-20 sm:py-24">
@@ -68,33 +105,46 @@ export function CoursesSection({ isSignedIn = false }: CoursesSectionProps) {
         </div>
 
         <div className="mt-12 grid gap-5 lg:grid-cols-3">
-          {courses.map((course) => {
-            const Icon = course.icon;
+          {visibleCourses.map((course, index) => {
+            const isSanityCourse = isFeaturedCourse(course);
+            const Icon = isSanityCourse
+              ? icons[index % icons.length]
+              : course.icon;
+            const title = course.title || "كورس جديد";
+            const label = isSanityCourse ? getCourseLabel(course) : course.label;
+            const description = isSanityCourse
+              ? course.description ||
+                course.subtitle ||
+                "مسار عملي من Wasl Academy لمساعدة التاجر على تطوير متجره خطوة بخطوة."
+              : course.description;
+            const lessons = isSanityCourse
+              ? getLessonLabel(course)
+              : course.lessons;
 
             return (
               <article
                 className="rounded-md border bg-background p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-primary/45 hover:shadow-md"
-                key={course.title}
+                key={"_id" in course ? course._id : title}
               >
                 <div className="flex items-start justify-between gap-4">
                   <span className="flex size-12 items-center justify-center rounded-md bg-primary/10 text-primary">
                     <Icon className="size-5" />
                   </span>
                   <span className="rounded-md border bg-card px-3 py-1 text-sm font-medium text-primary">
-                    {course.label}
+                    {label}
                   </span>
                 </div>
 
                 <h3 className="mt-7 text-xl font-semibold text-foreground">
-                  {course.title}
+                  {title}
                 </h3>
                 <p className="mt-3 min-h-20 text-sm leading-7 text-muted-foreground">
-                  {course.description}
+                  {description}
                 </p>
 
                 <div className="mt-6 flex items-center justify-between border-t pt-5">
                   <span className="text-sm text-muted-foreground">
-                    {course.lessons}
+                    {lessons}
                   </span>
                   <Link
                     href={href}

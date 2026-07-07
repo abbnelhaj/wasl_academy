@@ -17,6 +17,11 @@
 /.next/
 /out/
 
+# sanity studio
+/sanity/node_modules/
+/sanity/.sanity/
+/sanity/dist/
+
 # production
 /build
 

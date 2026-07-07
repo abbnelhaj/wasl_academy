@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { SanityLive } from "@/sanity/lib/live";
 import "./globals.css";
 
 
@@ -58,7 +59,9 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col bg-background text-foreground font-sans antialiased">
         <TooltipProvider>
           {children}
+          <SanityLive />
           <Toaster richColors position="top-center" />
+        
         </TooltipProvider>
       </body>
     </html>

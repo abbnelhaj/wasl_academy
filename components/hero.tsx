@@ -9,16 +9,16 @@ import {
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { STATS_QUERY_RESULT } from "@/sanity.types";
+
+export type HeroStats = (Partial<STATS_QUERY_RESULT> & {
+  studentCount?: number | null;
+}) | null;
 
 type HeroSectionProps = {
   isSignedIn?: boolean;
+  stats?: HeroStats;
 };
-
-const metrics = [
-  { label: "مسارات للتجار", value: "12" },
-  { label: "دروس عملية", value: "80+" },
-  { label: "قوالب تشغيل", value: "18" },
-];
 
 const operatingSteps = [
   "رتب صفحة المنتج",
@@ -26,9 +26,21 @@ const operatingSteps = [
   "تابع الشحن والعميل",
 ];
 
-export default function HeroSection({ isSignedIn = false }: HeroSectionProps) {
+function formatStat(value: number | null | undefined, suffix = "") {
+  return `${value ?? 0}${suffix}`;
+}
+
+export default function HeroSection({
+  isSignedIn = false,
+  stats,
+}: HeroSectionProps) {
   const primaryHref = isSignedIn ? "/dashboard/courses" : "#courses";
   const primaryLabel = isSignedIn ? "اذهب إلى كورساتي" : "استعرض المسارات";
+  const metrics = [
+    { label: "مسارات للتجار", value: formatStat(stats?.courseCount) },
+    { label: "دروس عملية", value: formatStat(stats?.lessonCount, "+") },
+    { label: "طلاب تطبق", value: formatStat(stats?.studentCount) },
+  ];
 
   return (
     <section className="border-b bg-background px-6 pb-16 pt-32 sm:px-10 sm:pt-36 lg:px-16">

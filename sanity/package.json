@@ -1,0 +1,22 @@
+{
+  "name": "studio-wasl-academy",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "node scripts/with-root-env.mjs sanity dev",
+    "start": "node scripts/with-root-env.mjs sanity start",
+    "build": "node scripts/with-root-env.mjs sanity build",
+    "deploy": "node scripts/with-root-env.mjs sanity deploy",
+    "typegen": "node scripts/with-root-env.mjs sanity schema extract && node scripts/with-root-env.mjs sanity typegen generate"
+  },
+  "dependencies": {
+    "@sanity/icons": "^5.0.0",
+    "@sanity/vision": "latest",
+    "sanity": "latest",
+    "sanity-plugin-mux-input": "^4.1.5",
+    "styled-components": "^6.4.3"
+  },
+  "devDependencies": {
+    "typescript": "latest"
+  }
+}
