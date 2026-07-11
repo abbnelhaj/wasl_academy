@@ -66,7 +66,9 @@ function getLessonLabel(course: FeaturedCourse) {
   return `${moduleCount} ${moduleCount === 1 ? "وحدة" : "وحدات"}`;
 }
 
-function isFeaturedCourse(course: (typeof fallbackCourses)[number] | FeaturedCourse) {
+function isFeaturedCourse(
+  course: (typeof fallbackCourses)[number] | FeaturedCourse,
+): course is FeaturedCourse {
   return "_id" in course;
 }
 
@@ -111,7 +113,9 @@ export function CoursesSection({
               ? icons[index % icons.length]
               : course.icon;
             const title = course.title || "كورس جديد";
-            const label = isSanityCourse ? getCourseLabel(course) : course.label;
+            const label = isSanityCourse
+              ? getCourseLabel(course)
+              : course.label;
             const description = isSanityCourse
               ? course.description ||
                 course.subtitle ||

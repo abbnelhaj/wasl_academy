@@ -61,6 +61,7 @@ export type Lesson = {
     _key: string;
   }>;
   isFreePreview?: boolean;
+  completedBy?: Array<string>;
 };
 
 export type SanityImageCrop = {
@@ -153,7 +154,6 @@ export type Course = {
   accessType?: "free" | "paid";
   price?: number;
   currency?: "SAR" | "USD";
-  stripePriceId?: string;
   modules?: Array<{
     _key: string;
   } & ModuleReference>;
@@ -364,6 +364,103 @@ export type Geopoint = {
 
 export type AllSanitySchemaTypes = SanityImageAssetReference | Lesson | SanityImageCrop | SanityImageHotspot | MuxVideoAssetReference | MuxVideo | Slug | LessonReference | Module | CategoryReference | ModuleReference | Course | Category | MuxVideoAsset | MuxAssetData | MuxMasterFile | MuxStaticRenditions | MuxStaticRenditionFile | MuxPlaybackId | MuxTrack | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageMetadata | SanityFileAsset | SanityAssetSourceData | SanityImageAsset | Geopoint;
 
+// Source: ../components/admin/dashboard/AdminDashboard.tsx
+// Variable: ADMIN_STATS_QUERY
+// Query: {  "courseCount": count(*[_type == "course"]),  "freeCourseCount": count(*[_type == "course" && accessType != "paid"]),  "paidCourseCount": count(*[_type == "course" && accessType == "paid"]),  "moduleCount": count(*[_type == "module"]),  "lessonCount": count(*[_type == "lesson"]),  "previewLessonCount": count(*[_type == "lesson" && isFreePreview == true]),  "categoryCount": count(*[_type == "category"])}
+export type ADMIN_STATS_QUERY_RESULT = {
+  courseCount: number;
+  freeCourseCount: number;
+  paidCourseCount: number;
+  moduleCount: number;
+  lessonCount: number;
+  previewLessonCount: number;
+  categoryCount: number;
+};
+
+// Source: ../components/admin/documents/DocumentActions.tsx
+// Variable: PUBLISHED_DOCUMENT_QUERY
+// Query: *[_id == $id][0]{ _id }
+export type PUBLISHED_DOCUMENT_QUERY_RESULT = {
+  _id: string;
+} | null;
+
+// Source: ../components/admin/layout/AdminBreadcrumb.tsx
+// Variable: COURSE_QUERY
+// Query: *[_type == "course" && _id match "*" + $baseId][0]{ title }
+export type COURSE_QUERY_RESULT = {
+  title: string | null;
+} | null;
+
+// Source: ../components/admin/layout/AdminBreadcrumb.tsx
+// Variable: MODULE_QUERY
+// Query: {  "module": *[_type == "module" && _id match "*" + $baseId][0]{ title },  "course": *[_type == "course" && $baseId in modules[]._ref][0]{ _id, title }}
+export type MODULE_QUERY_RESULT = {
+  module: {
+    title: string | null;
+  } | null;
+  course: {
+    _id: string;
+    title: string | null;
+  } | null;
+};
+
+// Source: ../components/admin/layout/AdminBreadcrumb.tsx
+// Variable: LESSON_QUERY
+// Query: {  "lesson": *[_type == "lesson" && _id match "*" + $baseId][0]{ title },  "module": *[_type == "module" && $baseId in lessons[]._ref][0]{ _id, title },  "course": *[_type == "course" && count(modules[@._ref in *[_type == "module" && $baseId in lessons[]._ref]._id]) > 0][0]{ _id, title }}
+export type LESSON_QUERY_RESULT = {
+  lesson: {
+    title: string | null;
+  } | null;
+  module: {
+    _id: string;
+    title: string | null;
+  } | null;
+  course: {
+    _id: string;
+    title: string | null;
+  } | null;
+};
+
+// Source: ../components/admin/layout/AdminBreadcrumb.tsx
+// Variable: CATEGORY_QUERY
+// Query: *[_type == "category" && _id match "*" + $baseId][0]{ title }
+export type CATEGORY_QUERY_RESULT = {
+  title: string | null;
+} | null;
+
+// Source: ../components/admin/layout/AdminBreadcrumb.tsx
+// Variable: NULL_QUERY
+// Query: null
+export type NULL_QUERY_RESULT = null;
+
+// Source: ../lib/ai/tools/search-courses.ts
+// Variable: ALL_COURSES_WITH_CONTENT_QUERY
+// Query: *[_type == "course"] | order(featured desc, _createdAt desc) {    _id,    title,    "slug": slug.current,    subtitle,    description,    accessType,    price,    currency,    level,    "category": category->title,    modules[]-> {      _id,      title,      description,      lessons[]-> {        _id,        title,        "slug": slug.current,        shortDescription,        "contentText": pt::text(content)      }    }  }
+export type ALL_COURSES_WITH_CONTENT_QUERY_RESULT = Array<{
+  _id: string;
+  title: string | null;
+  slug: string | null;
+  subtitle: string | null;
+  description: string | null;
+  accessType: "free" | "paid" | null;
+  price: number | null;
+  currency: "SAR" | "USD" | null;
+  level: "advanced" | "beginner" | "intermediate" | null;
+  category: string | null;
+  modules: Array<{
+    _id: string;
+    title: string | null;
+    description: string | null;
+    lessons: Array<{
+      _id: string;
+      title: string | null;
+      slug: string | null;
+      shortDescription: string | null;
+      contentText: string;
+    }> | null;
+  }> | null;
+}>;
+
 // Source: lib/queries.ts
 // Variable: FEATURED_COURSES_QUERY
 // Query: *[    _type == "course"    && featured == true  ] | order(_createdAt desc)[0...6] {    _id,    title,    "slug": slug.current,    subtitle,    description,    accessType,    price,    currency,    featured,    level,    thumbnail {      asset-> {        _id,        url      }    },    "moduleCount": count(modules),    "lessonCount": count(modules[]->lessons[])  }
@@ -400,7 +497,7 @@ export type STATS_QUERY_RESULT = {
 
 // Source: lib/queries.ts
 // Variable: DASHBOARD_COURSES_QUERY
-// Query: *[_type == "course"] | order(_createdAt desc) {    _id,    title,    slug,    subtitle,    description,    accessType,    price,    currency,    stripePriceId,    featured,    level,    completedBy,    thumbnail {      asset-> {        _id,        url      }    },    category-> {      _id,      title,      "slug": slug.current    },    "moduleCount": count(modules),    "lessonCount": count(modules[]->lessons[])  }
+// Query: *[_type == "course"] | order(_createdAt desc) {    _id,    title,    slug,    subtitle,    description,    accessType,    price,    currency,    featured,    level,    completedBy,    thumbnail {      asset-> {        _id,        url      }    },    category-> {      _id,      title,      "slug": slug.current    },    modules[]-> {      _id,      lessons[]-> {        _id,        completedBy      }    },    "moduleCount": count(modules),    "lessonCount": count(modules[]->lessons[])  }
 export type DASHBOARD_COURSES_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
@@ -410,7 +507,6 @@ export type DASHBOARD_COURSES_QUERY_RESULT = Array<{
   accessType: "free" | "paid" | null;
   price: number | null;
   currency: "SAR" | "USD" | null;
-  stripePriceId: string | null;
   featured: boolean | null;
   level: "advanced" | "beginner" | "intermediate" | null;
   completedBy: Array<string> | null;
@@ -425,17 +521,291 @@ export type DASHBOARD_COURSES_QUERY_RESULT = Array<{
     title: string | null;
     slug: string | null;
   } | null;
+  modules: Array<{
+    _id: string;
+    lessons: Array<{
+      _id: string;
+      completedBy: Array<string> | null;
+    }> | null;
+  }> | null;
   moduleCount: number | null;
   lessonCount: number | null;
 }>;
+
+// Source: lib/queries.ts
+// Variable: COURSE_WITH_MODULES_QUERY
+// Query: *[    _type == "course"    && slug.current == $slug  ][0] {    _id,    title,    slug,    subtitle,    description,    accessType,    price,    currency,    featured,    level,    completedBy,    "isCompleted": $userId in completedBy[],    thumbnail {      asset-> {        _id,        url      }    },    category-> {      _id,      title,      "slug": slug.current    },    modules[]-> {      _id,      title,      slug,      description,      lessons[]-> {        _id,        title,        slug,        shortDescription,        durationMinutes,        isFreePreview,        completedBy,        video {          asset-> {            _id,            playbackId,            status          }        },        content[] {          _key,          _type,          _type == "block" => {            style,            listItem,            level,            markDefs[] {              _key,              _type,              _type == "link" => {                href              }            },            children[] {              _key,              _type,              text,              marks            }          },          _type == "image" => {            _key,            _type,            asset-> {              _id,              url            },            alt,            caption,            crop,            hotspot          }        }      }    },    "moduleCount": count(modules),    "lessonCount": count(modules[]->lessons[])  }
+export type COURSE_WITH_MODULES_QUERY_RESULT = {
+  _id: string;
+  title: string | null;
+  slug: Slug | null;
+  subtitle: string | null;
+  description: string | null;
+  accessType: "free" | "paid" | null;
+  price: number | null;
+  currency: "SAR" | "USD" | null;
+  featured: boolean | null;
+  level: "advanced" | "beginner" | "intermediate" | null;
+  completedBy: Array<string> | null;
+  isCompleted: boolean | null;
+  thumbnail: {
+    asset: {
+      _id: string;
+      url: string | null;
+    } | null;
+  } | null;
+  category: {
+    _id: string;
+    title: string | null;
+    slug: string | null;
+  } | null;
+  modules: Array<{
+    _id: string;
+    title: string | null;
+    slug: Slug | null;
+    description: string | null;
+    lessons: Array<{
+      _id: string;
+      title: string | null;
+      slug: Slug | null;
+      shortDescription: string | null;
+      durationMinutes: number | null;
+      isFreePreview: boolean | null;
+      completedBy: Array<string> | null;
+      video: {
+        asset: {
+          _id: string;
+          playbackId: string | null;
+          status: string | null;
+        } | null;
+      } | null;
+      content: Array<{
+        _key: string;
+        _type: "block";
+        style: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal" | null;
+        listItem: "bullet" | "number" | null;
+        level: number | null;
+        markDefs: Array<{
+          _key: string;
+          _type: "link";
+          href: string | null;
+        }> | null;
+        children: Array<{
+          _key: string;
+          _type: "span";
+          text: string | null;
+          marks: Array<string> | null;
+        }> | null;
+      } | {
+        _key: string;
+        _type: "image";
+        asset: {
+          _id: string;
+          url: string | null;
+        } | null;
+        alt: string | null;
+        caption: string | null;
+        crop: SanityImageCrop | null;
+        hotspot: SanityImageHotspot | null;
+      }> | null;
+    }> | null;
+  }> | null;
+  moduleCount: number | null;
+  lessonCount: number | null;
+} | null;
+
+// Source: lib/queries.ts
+// Variable: LESSON_BY_ID_QUERY
+// Query: *[    _type == "lesson"    && _id == $lessonId  ][0] {    _id,    title,    slug,    shortDescription,    durationMinutes,    isFreePreview,    completedBy,    video {      asset-> {        _id,        playbackId,        status,        data {          duration        }      }    },    content[] {      _key,      _type,      _type == "block" => {        style,        listItem,        level,        markDefs[] {          _key,          _type,          _type == "link" => {            href          }        },        children[] {          _key,          _type,          text,          marks        }      },      _type == "image" => {        _key,        _type,        asset-> {          _id,          url        },        alt,        caption,        crop,        hotspot      }    },    "courses": *[      _type == "course"      && ^._id in modules[]->lessons[]->_id    ] | order(select(accessType == "free" => 0, accessType == "paid" => 1, 2), _createdAt desc) {      _id,      title,      slug,      subtitle,      description,      accessType,      price,      currency,      completedBy,      modules[]-> {        _id,        title,        slug,        description,        lessons[]-> {          _id,          title,          slug,          shortDescription,          durationMinutes,          isFreePreview,          completedBy,          video {            asset-> {              _id,              playbackId,              status            }          }        }      },      "moduleCount": count(modules),      "lessonCount": count(modules[]->lessons[])    }  }
+export type LESSON_BY_ID_QUERY_RESULT = {
+  _id: string;
+  title: string | null;
+  slug: Slug | null;
+  shortDescription: string | null;
+  durationMinutes: number | null;
+  isFreePreview: boolean | null;
+  completedBy: Array<string> | null;
+  video: {
+    asset: {
+      _id: string;
+      playbackId: string | null;
+      status: string | null;
+      data: {
+        duration: number | null;
+      } | null;
+    } | null;
+  } | null;
+  content: Array<{
+    _key: string;
+    _type: "block";
+    style: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal" | null;
+    listItem: "bullet" | "number" | null;
+    level: number | null;
+    markDefs: Array<{
+      _key: string;
+      _type: "link";
+      href: string | null;
+    }> | null;
+    children: Array<{
+      _key: string;
+      _type: "span";
+      text: string | null;
+      marks: Array<string> | null;
+    }> | null;
+  } | {
+    _key: string;
+    _type: "image";
+    asset: {
+      _id: string;
+      url: string | null;
+    } | null;
+    alt: string | null;
+    caption: string | null;
+    crop: SanityImageCrop | null;
+    hotspot: SanityImageHotspot | null;
+  }> | null;
+  courses: Array<{
+    _id: string;
+    title: string | null;
+    slug: Slug | null;
+    subtitle: string | null;
+    description: string | null;
+    accessType: "free" | "paid" | null;
+    price: number | null;
+    currency: "SAR" | "USD" | null;
+    completedBy: Array<string> | null;
+    modules: Array<{
+      _id: string;
+      title: string | null;
+      slug: Slug | null;
+      description: string | null;
+      lessons: Array<{
+        _id: string;
+        title: string | null;
+        slug: Slug | null;
+        shortDescription: string | null;
+        durationMinutes: number | null;
+        isFreePreview: boolean | null;
+        completedBy: Array<string> | null;
+        video: {
+          asset: {
+            _id: string;
+            playbackId: string | null;
+            status: string | null;
+          } | null;
+        } | null;
+      }> | null;
+    }> | null;
+    moduleCount: number | null;
+    lessonCount: number | null;
+  }>;
+} | null;
+
+// Source: lib/queries.ts
+// Variable: LESSON_BY_SLUG_QUERY
+// Query: *[    _type == "lesson"    && slug.current == $slug  ][0] {    _id,    title,    slug,    shortDescription,    durationMinutes,    isFreePreview,    completedBy,    video {      asset-> {        _id,        playbackId,        status,        data {          duration        }      }    },    content[] {      _key,      _type,      _type == "block" => {        style,        listItem,        level,        markDefs[] {          _key,          _type,          _type == "link" => {            href          }        },        children[] {          _key,          _type,          text,          marks        }      },      _type == "image" => {        _key,        _type,        asset-> {          _id,          url        },        alt,        caption,        crop,        hotspot      }    },    "courses": *[      _type == "course"      && ^._id in modules[]->lessons[]->_id    ] | order(select(accessType == "free" => 0, accessType == "paid" => 1, 2), _createdAt desc) {      _id,      title,      slug,      subtitle,      description,      accessType,      price,      currency,      completedBy,      modules[]-> {        _id,        title,        slug,        description,        lessons[]-> {          _id,          title,          slug,          shortDescription,          durationMinutes,          isFreePreview,          completedBy,          video {            asset-> {              _id,              playbackId,              status            }          }        }      },      "moduleCount": count(modules),      "lessonCount": count(modules[]->lessons[])    }  }
+export type LESSON_BY_SLUG_QUERY_RESULT = {
+  _id: string;
+  title: string | null;
+  slug: Slug | null;
+  shortDescription: string | null;
+  durationMinutes: number | null;
+  isFreePreview: boolean | null;
+  completedBy: Array<string> | null;
+  video: {
+    asset: {
+      _id: string;
+      playbackId: string | null;
+      status: string | null;
+      data: {
+        duration: number | null;
+      } | null;
+    } | null;
+  } | null;
+  content: Array<{
+    _key: string;
+    _type: "block";
+    style: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal" | null;
+    listItem: "bullet" | "number" | null;
+    level: number | null;
+    markDefs: Array<{
+      _key: string;
+      _type: "link";
+      href: string | null;
+    }> | null;
+    children: Array<{
+      _key: string;
+      _type: "span";
+      text: string | null;
+      marks: Array<string> | null;
+    }> | null;
+  } | {
+    _key: string;
+    _type: "image";
+    asset: {
+      _id: string;
+      url: string | null;
+    } | null;
+    alt: string | null;
+    caption: string | null;
+    crop: SanityImageCrop | null;
+    hotspot: SanityImageHotspot | null;
+  }> | null;
+  courses: Array<{
+    _id: string;
+    title: string | null;
+    slug: Slug | null;
+    subtitle: string | null;
+    description: string | null;
+    accessType: "free" | "paid" | null;
+    price: number | null;
+    currency: "SAR" | "USD" | null;
+    completedBy: Array<string> | null;
+    modules: Array<{
+      _id: string;
+      title: string | null;
+      slug: Slug | null;
+      description: string | null;
+      lessons: Array<{
+        _id: string;
+        title: string | null;
+        slug: Slug | null;
+        shortDescription: string | null;
+        durationMinutes: number | null;
+        isFreePreview: boolean | null;
+        completedBy: Array<string> | null;
+        video: {
+          asset: {
+            _id: string;
+            playbackId: string | null;
+            status: string | null;
+          } | null;
+        } | null;
+      }> | null;
+    }> | null;
+    moduleCount: number | null;
+    lessonCount: number | null;
+  }>;
+} | null;
 
 // Query TypeMap
 import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
+    "{\n  \"courseCount\": count(*[_type == \"course\"]),\n  \"freeCourseCount\": count(*[_type == \"course\" && accessType != \"paid\"]),\n  \"paidCourseCount\": count(*[_type == \"course\" && accessType == \"paid\"]),\n  \"moduleCount\": count(*[_type == \"module\"]),\n  \"lessonCount\": count(*[_type == \"lesson\"]),\n  \"previewLessonCount\": count(*[_type == \"lesson\" && isFreePreview == true]),\n  \"categoryCount\": count(*[_type == \"category\"])\n}": ADMIN_STATS_QUERY_RESULT;
+    "*[_id == $id][0]{ _id }": PUBLISHED_DOCUMENT_QUERY_RESULT;
+    "*[_type == \"course\" && _id match \"*\" + $baseId][0]{ title }": COURSE_QUERY_RESULT;
+    "{\n  \"module\": *[_type == \"module\" && _id match \"*\" + $baseId][0]{ title },\n  \"course\": *[_type == \"course\" && $baseId in modules[]._ref][0]{ _id, title }\n}": MODULE_QUERY_RESULT;
+    "{\n  \"lesson\": *[_type == \"lesson\" && _id match \"*\" + $baseId][0]{ title },\n  \"module\": *[_type == \"module\" && $baseId in lessons[]._ref][0]{ _id, title },\n  \"course\": *[_type == \"course\" && count(modules[@._ref in *[_type == \"module\" && $baseId in lessons[]._ref]._id]) > 0][0]{ _id, title }\n}": LESSON_QUERY_RESULT;
+    "*[_type == \"category\" && _id match \"*\" + $baseId][0]{ title }": CATEGORY_QUERY_RESULT;
+    "null": NULL_QUERY_RESULT;
+    "\n  *[_type == \"course\"] | order(featured desc, _createdAt desc) {\n    _id,\n    title,\n    \"slug\": slug.current,\n    subtitle,\n    description,\n    accessType,\n    price,\n    currency,\n    level,\n    \"category\": category->title,\n    modules[]-> {\n      _id,\n      title,\n      description,\n      lessons[]-> {\n        _id,\n        title,\n        \"slug\": slug.current,\n        shortDescription,\n        \"contentText\": pt::text(content)\n      }\n    }\n  }\n": ALL_COURSES_WITH_CONTENT_QUERY_RESULT;
     "\n  *[\n    _type == \"course\"\n    && featured == true\n  ] | order(_createdAt desc)[0...6] {\n    _id,\n    title,\n    \"slug\": slug.current,\n    subtitle,\n    description,\n    accessType,\n    price,\n    currency,\n    featured,\n    level,\n    thumbnail {\n      asset-> {\n        _id,\n        url\n      }\n    },\n    \"moduleCount\": count(modules),\n    \"lessonCount\": count(modules[]->lessons[])\n  }\n": FEATURED_COURSES_QUERY_RESULT;
     "\n  {\n    \"courseCount\": count(*[_type == \"course\"]),\n    \"lessonCount\": count(*[_type == \"lesson\"]),\n    \"freeCourseCount\": count(*[_type == \"course\" && accessType == \"free\"]),\n    \"paidCourseCount\": count(*[_type == \"course\" && accessType == \"paid\"])\n  }\n": STATS_QUERY_RESULT;
-    "\n  *[_type == \"course\"] | order(_createdAt desc) {\n    _id,\n    title,\n    slug,\n    subtitle,\n    description,\n    accessType,\n    price,\n    currency,\n    stripePriceId,\n    featured,\n    level,\n    completedBy,\n    thumbnail {\n      asset-> {\n        _id,\n        url\n      }\n    },\n    category-> {\n      _id,\n      title,\n      \"slug\": slug.current\n    },\n    \"moduleCount\": count(modules),\n    \"lessonCount\": count(modules[]->lessons[])\n  }\n": DASHBOARD_COURSES_QUERY_RESULT;
+    "\n  *[_type == \"course\"] | order(_createdAt desc) {\n    _id,\n    title,\n    slug,\n    subtitle,\n    description,\n    accessType,\n    price,\n    currency,\n    featured,\n    level,\n    completedBy,\n    thumbnail {\n      asset-> {\n        _id,\n        url\n      }\n    },\n    category-> {\n      _id,\n      title,\n      \"slug\": slug.current\n    },\n    modules[]-> {\n      _id,\n      lessons[]-> {\n        _id,\n        completedBy\n      }\n    },\n    \"moduleCount\": count(modules),\n    \"lessonCount\": count(modules[]->lessons[])\n  }\n": DASHBOARD_COURSES_QUERY_RESULT;
+    "\n  *[\n    _type == \"course\"\n    && slug.current == $slug\n  ][0] {\n    _id,\n    title,\n    slug,\n    subtitle,\n    description,\n    accessType,\n    price,\n    currency,\n    featured,\n    level,\n    completedBy,\n    \"isCompleted\": $userId in completedBy[],\n    thumbnail {\n      asset-> {\n        _id,\n        url\n      }\n    },\n    category-> {\n      _id,\n      title,\n      \"slug\": slug.current\n    },\n    modules[]-> {\n      _id,\n      title,\n      slug,\n      description,\n      lessons[]-> {\n        _id,\n        title,\n        slug,\n        shortDescription,\n        durationMinutes,\n        isFreePreview,\n        completedBy,\n        video {\n          asset-> {\n            _id,\n            playbackId,\n            status\n          }\n        },\n        content[] {\n          _key,\n          _type,\n          _type == \"block\" => {\n            style,\n            listItem,\n            level,\n            markDefs[] {\n              _key,\n              _type,\n              _type == \"link\" => {\n                href\n              }\n            },\n            children[] {\n              _key,\n              _type,\n              text,\n              marks\n            }\n          },\n          _type == \"image\" => {\n            _key,\n            _type,\n            asset-> {\n              _id,\n              url\n            },\n            alt,\n            caption,\n            crop,\n            hotspot\n          }\n        }\n      }\n    },\n    \"moduleCount\": count(modules),\n    \"lessonCount\": count(modules[]->lessons[])\n  }\n": COURSE_WITH_MODULES_QUERY_RESULT;
+    "\n  *[\n    _type == \"lesson\"\n    && _id == $lessonId\n  ][0] {\n    _id,\n    title,\n    slug,\n    shortDescription,\n    durationMinutes,\n    isFreePreview,\n    completedBy,\n    video {\n      asset-> {\n        _id,\n        playbackId,\n        status,\n        data {\n          duration\n        }\n      }\n    },\n    content[] {\n      _key,\n      _type,\n      _type == \"block\" => {\n        style,\n        listItem,\n        level,\n        markDefs[] {\n          _key,\n          _type,\n          _type == \"link\" => {\n            href\n          }\n        },\n        children[] {\n          _key,\n          _type,\n          text,\n          marks\n        }\n      },\n      _type == \"image\" => {\n        _key,\n        _type,\n        asset-> {\n          _id,\n          url\n        },\n        alt,\n        caption,\n        crop,\n        hotspot\n      }\n    },\n    \"courses\": *[\n      _type == \"course\"\n      && ^._id in modules[]->lessons[]->_id\n    ] | order(select(accessType == \"free\" => 0, accessType == \"paid\" => 1, 2), _createdAt desc) {\n      _id,\n      title,\n      slug,\n      subtitle,\n      description,\n      accessType,\n      price,\n      currency,\n      completedBy,\n      modules[]-> {\n        _id,\n        title,\n        slug,\n        description,\n        lessons[]-> {\n          _id,\n          title,\n          slug,\n          shortDescription,\n          durationMinutes,\n          isFreePreview,\n          completedBy,\n          video {\n            asset-> {\n              _id,\n              playbackId,\n              status\n            }\n          }\n        }\n      },\n      \"moduleCount\": count(modules),\n      \"lessonCount\": count(modules[]->lessons[])\n    }\n  }\n": LESSON_BY_ID_QUERY_RESULT;
+    "\n  *[\n    _type == \"lesson\"\n    && slug.current == $slug\n  ][0] {\n    _id,\n    title,\n    slug,\n    shortDescription,\n    durationMinutes,\n    isFreePreview,\n    completedBy,\n    video {\n      asset-> {\n        _id,\n        playbackId,\n        status,\n        data {\n          duration\n        }\n      }\n    },\n    content[] {\n      _key,\n      _type,\n      _type == \"block\" => {\n        style,\n        listItem,\n        level,\n        markDefs[] {\n          _key,\n          _type,\n          _type == \"link\" => {\n            href\n          }\n        },\n        children[] {\n          _key,\n          _type,\n          text,\n          marks\n        }\n      },\n      _type == \"image\" => {\n        _key,\n        _type,\n        asset-> {\n          _id,\n          url\n        },\n        alt,\n        caption,\n        crop,\n        hotspot\n      }\n    },\n    \"courses\": *[\n      _type == \"course\"\n      && ^._id in modules[]->lessons[]->_id\n    ] | order(select(accessType == \"free\" => 0, accessType == \"paid\" => 1, 2), _createdAt desc) {\n      _id,\n      title,\n      slug,\n      subtitle,\n      description,\n      accessType,\n      price,\n      currency,\n      completedBy,\n      modules[]-> {\n        _id,\n        title,\n        slug,\n        description,\n        lessons[]-> {\n          _id,\n          title,\n          slug,\n          shortDescription,\n          durationMinutes,\n          isFreePreview,\n          completedBy,\n          video {\n            asset-> {\n              _id,\n              playbackId,\n              status\n            }\n          }\n        }\n      },\n      \"moduleCount\": count(modules),\n      \"lessonCount\": count(modules[]->lessons[])\n    }\n  }\n": LESSON_BY_SLUG_QUERY_RESULT;
   }
 }
 

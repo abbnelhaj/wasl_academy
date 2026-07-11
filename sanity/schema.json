@@ -359,6 +359,16 @@
           "type": "boolean"
         },
         "optional": true
+      },
+      "completedBy": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "string"
+          }
+        },
+        "optional": true
       }
     }
   },
@@ -862,13 +872,6 @@
               "value": "USD"
             }
           ]
-        },
-        "optional": true
-      },
-      "stripePriceId": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "string"
         },
         "optional": true
       },

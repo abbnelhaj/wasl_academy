@@ -1,6 +1,6 @@
-import { defineCliConfig } from "sanity/cli"
+import { defineCliConfig } from "sanity/cli";
 
-import { dataset, projectId } from "./env"
+import { dataset, projectId } from "./env";
 
 export default defineCliConfig({
   api: {
@@ -21,4 +21,4 @@ export default defineCliConfig({
       },
     },
   },
-})
+});

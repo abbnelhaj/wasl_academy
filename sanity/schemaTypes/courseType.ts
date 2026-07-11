@@ -124,15 +124,6 @@ export const courseType = defineType({
       initialValue: "SAR",
     }),
     defineField({
-      name: "stripePriceId",
-      title: "Stripe Price ID",
-      type: "string",
-      group: "pricing",
-      description:
-        "Later this connects the course to Stripe. Leave it empty while designing content.",
-      hidden: ({ parent }) => parent?.accessType !== "paid",
-    }),
-    defineField({
       name: "modules",
       title: "Modules",
       type: "array",

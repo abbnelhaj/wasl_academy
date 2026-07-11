@@ -1,8 +1,8 @@
 "use client";
 
+import { CheckCircle2, Layers, Lock, Play } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2, Layers, Lock, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
   COURSE_ACCESS_STYLES,
@@ -11,26 +11,25 @@ import {
   getCourseAccessLabel,
   normalizeCourseAccess,
   normalizeCourseLevel,
-} from "@/lib/constants";
+} from "@/lib/constans";
 import type { DASHBOARD_COURSES_QUERY_RESULT } from "@/sanity.types";
 
 type SanityCourse = DASHBOARD_COURSES_QUERY_RESULT[number];
 
-export interface CourseCardProps
-  extends Pick<
-    SanityCourse,
-    | "accessType"
-    | "currency"
-    | "description"
-    | "featured"
-    | "lessonCount"
-    | "level"
-    | "moduleCount"
-    | "price"
-    | "slug"
-    | "thumbnail"
-    | "title"
-  > {
+export interface CourseCardProps extends Pick<
+  SanityCourse,
+  | "accessType"
+  | "currency"
+  | "description"
+  | "featured"
+  | "lessonCount"
+  | "level"
+  | "moduleCount"
+  | "price"
+  | "slug"
+  | "thumbnail"
+  | "title"
+> {
   href?: string;
   completedLessonCount?: number | null;
   isCompleted?: boolean;
@@ -66,7 +65,8 @@ export function CourseCard({
   const progressPercent =
     totalLessons > 0 ? (completed / totalLessons) * 100 : 0;
 
-  const linkHref = href ?? `/courses/${slug?.current ?? ""}`;
+  const linkHref =
+    href ?? (slug?.current ? `/courses/${slug.current}` : "/dashboard/courses");
 
   return (
     <Link href={linkHref} className="group block">

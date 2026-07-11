@@ -79,6 +79,11 @@ const child = spawn(command, args, {
   stdio: "inherit",
 })
 
+child.on("error", (error) => {
+  console.error(`Failed to start command "${command}":`, error)
+  process.exit(1)
+})
+
 child.on("exit", (code, signal) => {
   if (signal) {
     process.kill(process.pid, signal)

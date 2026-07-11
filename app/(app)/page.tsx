@@ -1,37 +1,54 @@
 import { clerkClient, currentUser } from "@clerk/nextjs/server";
-import { CoursesSection } from "@/components/courses-section";
 import type { FeaturedCourse } from "@/components/courses-section";
+import { CoursesSection } from "@/components/courses-section";
 import { CtaSection } from "@/components/cta-section";
 import { FeatureSection } from "@/components/feature-section";
-import HeroSection from "@/components/hero";
 import type { HeroStats } from "@/components/hero";
+import HeroSection from "@/components/hero";
 import { SiteFooter } from "@/components/site-footer";
 import { TestimonialsSection } from "@/components/testimonials-section";
-import { FEATURED_COURSES_QUERY, STATS_QUERY } from "@/sanity/lib/queries";
 import { sanityFetch } from "@/sanity/lib/live";
+import { FEATURED_COURSES_QUERY, STATS_QUERY } from "@/sanity/lib/queries";
+
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [{ data: courses }, { data: stats }, user, users] = await Promise.all([
-    sanityFetch({ query: FEATURED_COURSES_QUERY }),
-    sanityFetch({ query: STATS_QUERY }),
-    currentUser(),
-    clerkClient().then((client) => client.users.getUserList({ limit: 1 })),
+  const [courses, stats, user, studentCount] = await Promise.all([
+    sanityFetch({ query: FEATURED_COURSES_QUERY })
+      .then(({ data }) => data)
+      .catch((error) => {
+        console.error("Failed to load featured courses", error);
+        return [] satisfies FeaturedCourse[];
+      }),
+    sanityFetch({ query: STATS_QUERY })
+      .then(({ data }) => data)
+      .catch((error) => {
+        console.error("Failed to load home stats", error);
+        return null;
+      }),
+    currentUser().catch((error) => {
+      console.error("Failed to load current user", error);
+      return null;
+    }),
+    clerkClient()
+      .then((client) => client.users.getCount())
+      .catch((error) => {
+        console.error("Failed to load user count", error);
+        return null;
+      }),
   ]);
 
   const isSignedIn = !!user;
   const heroStats = {
-    ...(stats as Exclude<HeroStats, null>),
-    studentCount: users.totalCount,
+    ...(stats ?? {}),
+    studentCount,
   } satisfies Exclude<HeroStats, null>;
 
   return (
     <main className="bg-background text-foreground">
       <HeroSection isSignedIn={isSignedIn} stats={heroStats} />
       <FeatureSection />
-      <CoursesSection
-        courses={courses as FeaturedCourse[]}
-        isSignedIn={isSignedIn}
-      />
+      <CoursesSection courses={courses} isSignedIn={isSignedIn} />
       <TestimonialsSection />
       <CtaSection isSignedIn={isSignedIn} />
       <SiteFooter />

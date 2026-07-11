@@ -1,5 +1,6 @@
-import { PlayIcon } from "@sanity/icons/Play"
-import { defineArrayMember, defineField, defineType } from "sanity"
+import { PlayIcon } from "@sanity/icons/Play";
+import { UserIcon } from "@sanity/icons/User";
+import { defineArrayMember, defineField, defineType } from "sanity";
 
 export const lessonType = defineType({
   name: "lesson",
@@ -11,6 +12,7 @@ export const lessonType = defineType({
     { name: "video", title: "Video" },
     { name: "content", title: "Content" },
     { name: "access", title: "Access" },
+    { name: "completion", title: "Completed By", icon: UserIcon },
   ],
   fields: [
     defineField({
@@ -92,6 +94,15 @@ export const lessonType = defineType({
         "Allow visitors to watch this lesson even when the parent course is paid.",
       initialValue: false,
     }),
+    defineField({
+      name: "completedBy",
+      title: "Completed By",
+      type: "array",
+      group: "completion",
+      description: "Clerk user IDs for users who completed this lesson.",
+      of: [defineArrayMember({ type: "string" })],
+      readOnly: true,
+    }),
   ],
   preview: {
     select: {
@@ -100,13 +111,13 @@ export const lessonType = defineType({
       isFreePreview: "isFreePreview",
     },
     prepare({ title, duration, isFreePreview }) {
-      const previewLabel = isFreePreview ? "Free preview" : "Locked by course"
-      const durationLabel = duration ? `${duration} min` : "No duration"
+      const previewLabel = isFreePreview ? "Free preview" : "Locked by course";
+      const durationLabel = duration ? `${duration} min` : "No duration";
 
       return {
         title,
         subtitle: `${durationLabel} • ${previewLabel}`,
-      }
+      };
     },
   },
-})
+});
